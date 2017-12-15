@@ -11,7 +11,10 @@ try:
 except IOError:
     README = CHANGES = ''
 
-install_requires = []
+install_requires = [
+    "requests",
+    "httplib2",
+]
 
 docs_extras = []
 
