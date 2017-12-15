@@ -10,4 +10,3 @@ install:
   - pip install -e .[testing,yaml]
 script:
   - python setup.py test
-  - make test
