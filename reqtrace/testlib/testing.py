@@ -2,10 +2,10 @@ import threading
 import contextlib
 import sys
 import io
+import os
 from .mockserve import create_server
-from .util import get_port_from_httpd
 
-_outputstream_factory = io.StringIO
+_outputstream_factory = None
 
 
 def set_debug():
@@ -19,7 +19,15 @@ def set_debug():
 
 def _get_output_stream():
     global _outputstream_factory
+    if _outputstream_factory is None:
+        _outputstream_factory = io.StringIO
+        if bool(os.environ.get("DEBUG")):
+            set_debug()
     return _outputstream_factory()
+
+
+def get_port_from_httpd(httpd):
+    return httpd.server_address[1]
 
 
 @contextlib.contextmanager
