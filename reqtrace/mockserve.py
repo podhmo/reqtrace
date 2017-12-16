@@ -1,8 +1,8 @@
 import logging
 import json
 from wsgiref.simple_server import make_server
-from ..messages import get_message_from_int
-from ..util import find_freeport
+from .messages import get_message_from_int
+from .util import find_freeport
 logger = logging.getLogger(__name__)
 
 

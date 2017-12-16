@@ -1,11 +1,11 @@
 import unittest
 import requests
-from reqtrace.testlib.testing import background_server
+from reqtrace.testing import background_server
 
 
 class MockServerTests(unittest.TestCase):
     def _makeOne(self, *args, **kwargs):
-        from reqtrace.testlib.mockserve import create_app
+        from reqtrace.mockserve import create_app
         return create_app(*args, **kwargs)
 
     def test_text(self):

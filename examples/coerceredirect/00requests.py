@@ -1,5 +1,5 @@
-from reqtrace.testlib.testing import background_server
-from reqtrace.testlib.mockserve import create_app
+from reqtrace.testing import background_server
+from reqtrace.mockserve import create_app
 from reqtrace.tracelib.requests import create_factory
 
 
