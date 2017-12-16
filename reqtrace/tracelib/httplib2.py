@@ -1,5 +1,6 @@
 import functools
 from httplib2 import Http
+from collections import namedtuple
 
 
 class TraceableHttpWrapper:
@@ -17,15 +18,16 @@ class TraceableHttpWrapper:
         return rawresponse, content
 
 
+# todo: replacing correct model object
 class _Request:
     def __init__(self, url):
         self.url = url
 
+    def __repr__(self):
+        return "<{} url={}>".format(self.__class__.__name__, self.url)
 
-class _Response:
-    def __init__(self, rawresponse, body):
-        self.rawresponse = rawresponse
-        self.body = body
+
+_Response = namedtuple("_Response", "rawresponse, body")
 
 
 def create_factory(*, on_request, on_response, internal_cls=Http, wrapper_cls=TraceableHttpWrapper):
