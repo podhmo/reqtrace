@@ -1,5 +1,4 @@
 import os
-import sys
 
 from setuptools import setup, find_packages
 here = os.path.abspath(os.path.dirname(__file__))
@@ -14,6 +13,10 @@ except IOError:
 install_requires = [
     "requests",
     "httplib2",
+]
+
+googleapi_extras = [
+    "google-api-python-client",
 ]
 
 docs_extras = []
@@ -42,6 +45,7 @@ setup(
     extras_require={
         'testing': testing_extras,
         'docs': docs_extras,
+        'googleapi': googleapi_extras,
     },
     tests_require=tests_require,
     test_suite="reqtrace.tests",
