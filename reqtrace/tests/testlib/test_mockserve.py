@@ -8,29 +8,38 @@ class MockServerTests(unittest.TestCase):
         from reqtrace.testlib.mockserve import create_app
         return create_app(*args, **kwargs)
 
-    def test_200_text(self):
-        def callback(environ):
-            return "ok"
+    def test_text(self):
+        candidates = [
+            ("ok", 200),
+            ("hmm", 404),
+        ]
+        for (body, code) in candidates:
 
-        with background_server(self._makeOne(callback)) as url:
-            response = requests.get(url)
-            self.assertEqual(200, response.status_code)
-            self.assertEqual("ok", response.text)
+            def callback(environ):
+                return body, code
 
-    def test_404_text(self):
-        def callback(environ):
-            return "hmm", 404
+            with self.subTest(body=body, code=code):
+                with background_server(self._makeOne(callback)) as url:
+                    response = requests.get(url)
+                    self.assertEqual(code, response.status_code)
+                    self.assertEqual(body, response.text)
 
-        with background_server(self._makeOne(callback)) as url:
-            response = requests.get(url)
-            self.assertEqual(404, response.status_code, 404)
-            self.assertEqual("hmm", response.text)
+    def test_json(self):
+        candidates = [
+            ({
+                "message": "ok"
+            }, 200),
+            ({
+                "message": "not found"
+            }, 404),
+        ]
+        for (body, code) in candidates:
 
-    def test_200_json(self):
-        def callback(environ):
-            return {"message": "ok"}
+            def callback(environ):
+                return body, code
 
-        with background_server(self._makeOne(callback)) as url:
-            response = requests.get(url)
-            self.assertEqual(200, response.status_code)
-            self.assertEqual({"message": "ok"}, response.json())
+            with self.subTest(body=body, code=code):
+                with background_server(self._makeOne(callback)) as url:
+                    response = requests.get(url)
+                    self.assertEqual(code, response.status_code)
+                    self.assertEqual(body, response.json())
