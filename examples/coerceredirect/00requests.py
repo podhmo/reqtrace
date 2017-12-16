@@ -14,5 +14,5 @@ with background_server(create_app(callback)) as url:
 
     Session = create_factory(on_request=coerce_redirect, on_response=print)
     s = Session()
-    response = s.get(url)
+    response = s.get("https://www.google.com/")
     print(response.text)
