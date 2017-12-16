@@ -1,6 +1,6 @@
 from reqtrace.testlib.testing import background_server
 from reqtrace.testlib.mockserve import create_app
-from reqtrace.tracelib.httplib2 import make_client
+from reqtrace.tracelib.httplib2 import create_factory
 
 
 def callback(environ):
@@ -12,7 +12,8 @@ with background_server(create_app(callback)) as url:
     def coerce_redirect(request):
         request.url = url
 
-    h = make_client(on_request=coerce_redirect, on_response=print)
+    Http = create_factory(on_request=print, on_response=print)
+    h = Http()
     response, content = h.request(
         "http://www.google.com/", "GET", headers={"content-type": "text/plain"}
     )

@@ -1,3 +1,4 @@
+import functools
 from httplib2 import Http
 
 
@@ -27,8 +28,10 @@ class _Response:
         self.body = body
 
 
-def make_client(
-    *, on_request, on_response, http_class=Http, wrapper_class=TraceableHttpWrapper, **kwargs
-):
-    internal = Http(**kwargs)
-    return wrapper_class(internal, on_request=on_request, on_response=on_response)
+def create_factory(*, on_request, on_response, internal_cls=Http, wrapper_cls=TraceableHttpWrapper):
+    @functools.wraps(internal_cls)
+    def factory(*args, **kwargs):
+        internal = internal_cls(*args, **kwargs)
+        return wrapper_cls(internal, on_request=on_request, on_response=on_response)
+
+    return factory

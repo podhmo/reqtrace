@@ -1,7 +1,8 @@
+import functools
 from requests import sessions
 
 
-class TracealbeHTTPWrapper:
+class TraceableHTTPAdapter:
     def __init__(self, internal, *, on_request, on_response):
         self.internal = internal
         self.on_request = on_request
@@ -19,27 +20,14 @@ class TracealbeHTTPWrapper:
 
 _registry = {
     "original": None,
-    "on_request": None,
-    "on_response": None,
+    "factory": None,
 }
 
 
-def make_client(on_request, on_response, *, wrapper_class=TracealbeHTTPWrapper):
-    s = sessions.Session()
-    s.mount(
-        "http://",
-        wrapper_class(s.get_adapter("http://"), on_request=on_request, on_response=on_response)
-    )
-    s.mount(
-        "https://",
-        wrapper_class(s.get_adapter("https://"), on_request=on_request, on_response=on_response)
-    )
-    return s
-
-
-def request(method, url, **kwargs):
+def request(method, url, factory=None, **kwargs):
     global _registry
-    with make_client(_registry["on_request"], _registry["on_response"]) as session:
+    factory or _registry["factory"]
+    with factory() as session:
         return session.request(method=method, url=url, **kwargs)
 
 
@@ -56,8 +44,26 @@ def monkeypatch(*, on_request, on_response, force=False):
     if original is None:
         _registry["original"] = requests.api.request
 
-    _registry["on_request"] = on_request
-    _registry["on_response"] = on_response
+    _registry["factory"] = create_factory(on_request, on_response)
 
     requests.request = request
     requests.api.request = request
+
+
+def create_factory(
+    *, on_request, on_response, internal_cls=sessions.Session, wrapper_cls=TraceableHTTPAdapter
+):
+    @functools.wraps(internal_cls)
+    def factory(*args, **kwargs):
+        s = internal_cls(*args, **kwargs)
+        s.mount(
+            "http://",
+            wrapper_cls(s.get_adapter("http://"), on_request=on_request, on_response=on_response)
+        )
+        s.mount(
+            "https://",
+            wrapper_cls(s.get_adapter("https://"), on_request=on_request, on_response=on_response)
+        )
+        return s
+
+    return factory
