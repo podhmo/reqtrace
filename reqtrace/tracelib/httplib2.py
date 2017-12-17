@@ -1,6 +1,6 @@
 import functools
 from httplib2 import Http
-from collections import namedtuple
+from . import models
 
 
 class TraceableHttpWrapper:
@@ -9,25 +9,56 @@ class TraceableHttpWrapper:
         self.on_request = on_request
         self.on_response = on_response
 
-    def request(self, uri, *args, **kwargs):
-        request = _Request(uri)
+    def request(self, uri, method="GET", body=None, headers=None, **kwargs):
+        kwargs["method"] = method
+        kwargs["body"] = body
+        kwargs["headers"] = headers or {}
+        request = Httplib2TracingRequest(uri, kwargs)
         self.on_request(request)
-        rawresponse, content = self.internal.request(request.url, *args, **kwargs)
-        response = _Response(rawresponse, content)
-        self.on_response(response)
+        rawresponse, content = self.internal.request(request.url, **kwargs)
+        self.on_response(Httplib2TracingResponse(request, rawresponse, content))
         return rawresponse, content
 
 
-# todo: replacing correct model object
-class _Request:
-    def __init__(self, url):
+class Httplib2TracingRequest(models.TracingRequest):
+    __slots__ = ("url", "kwargs")
+
+    def __init__(self, url, kwargs):
         self.url = url
+        self.kwargs = kwargs
 
-    def __repr__(self):
-        return "<{} url={}>".format(self.__class__.__name__, self.url)
+    @property
+    def headers(self):
+        return self.kwargs.get("headers") or {}
+
+    @property
+    def method(self):
+        return self.kwargs.get("method") or ""
+
+    @property
+    def body(self):
+        return self.kwargs.get("body")
 
 
-_Response = namedtuple("_Response", "rawresponse, body")
+class Httplib2TracingResponse(models.TracingResponse):
+    __slots__ = ("request", "rawresponse", "content")
+
+    def __init__(self, request, rawresponse, content):
+        self.request = request
+        self.rawresponse = rawresponse
+        self.content = content
+
+    @property
+    def url(self):
+        return self.request.url
+
+    @property
+    def status_code(self):
+        return int(self.rawresponse["status"])
+
+    @property
+    def headers(self):
+        return self.rawresponse
 
 
 def create_factory(*, on_request, on_response, internal_cls=Http, wrapper_cls=TraceableHttpWrapper):

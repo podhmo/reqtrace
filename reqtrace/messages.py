@@ -78,5 +78,5 @@ status_generic_reasons = {
 }
 
 
-def get_message_from_int(code, *, status_reasons=status_reasons):
+def get_reason_from_int(code, *, status_reasons=status_reasons):
     return status_reasons[code]

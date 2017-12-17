@@ -25,7 +25,7 @@ with background_server(create_app(discovery_callback)) as url:
     rs = RedirectStore(url)
 
     def noop(response):
-        pass
+        print(response)
 
     build_google = create_factory(on_request=rs, on_response=noop)
     service = build_google("slides", "v1")

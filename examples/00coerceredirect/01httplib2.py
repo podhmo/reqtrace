@@ -12,10 +12,13 @@ with background_server(create_app(callback)) as url:
     def coerce_redirect(request):
         request.url = url
 
-    Http = create_factory(on_request=print, on_response=print)
+    def on_response(response):
+        print(response)
+
+    Http = create_factory(on_request=coerce_redirect, on_response=on_response)
     h = Http()
     response, content = h.request(
-        "http://www.google.com/", "GET", headers={"content-type": "text/plain"}
+        "http://www.google.com/", method="GET", headers={"content-type": "text/plain"}
     )
     print(response)
     print(content)

@@ -1,7 +1,7 @@
 import logging
 import json
 from wsgiref.simple_server import make_server
-from .messages import get_message_from_int
+from .messages import get_reason_from_int
 from .util import find_freeport
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def create_app(handler, content_type='text/plain', encoding="utf-8"):
             body = result
             code = 200
 
-        status = "{} {}".format(code, get_message_from_int(code))
+        status = "{} {}".format(code, get_reason_from_int(code))
         start_response(status, headers)
         return [coerce_response(body)]
 

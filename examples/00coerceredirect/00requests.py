@@ -12,7 +12,11 @@ with background_server(create_app(callback)) as url:
     def coerce_redirect(request):
         request.url = url
 
-    Session = create_factory(on_request=coerce_redirect, on_response=print)
+    def trace_response(response):
+        print(response)
+        pass
+
+    Session = create_factory(on_request=coerce_redirect, on_response=trace_response)
     s = Session()
     response = s.get("https://www.google.com/")
     print(response.text)

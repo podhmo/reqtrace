@@ -1,5 +1,6 @@
 import functools
 from requests import sessions
+from . import models
 
 
 class TraceableHTTPAdapter:
@@ -9,9 +10,9 @@ class TraceableHTTPAdapter:
         self.on_response = on_response
 
     def send(self, request, *args, **kwargs):
-        self.on_request(request)
+        self.on_request(request)  # xxx:
         response = self.internal.send(request, *args, **kwargs)
-        self.on_response(response)
+        self.on_response(RequestsTracingResponse(RequestsTracingRequest(request), response))
         return response
 
     def close(self):
@@ -68,4 +69,49 @@ def create_factory(
 
     return factory
 
-# todo same interface of requests.api
+
+class RequestsTracingRequest(models.TracingRequest):
+    __slots__ = ("rawrequest", )
+
+    def __init__(self, rawrequest):
+        self.rawrequest = rawrequest
+
+    @property
+    def headers(self):
+        return self.rawrequest.headers
+
+    @property
+    def url(self):
+        return self.rawrequest.url
+
+    @property
+    def method(self):
+        return self.rawrequest.method
+
+    @property
+    def body(self):
+        return self.rawrequest.body
+
+
+class RequestsTracingResponse(models.TracingResponse):
+    __slots__ = ("request", "rawresponse")
+
+    def __init__(self, request, rawresponse):
+        self.request = request
+        self.rawresponse = rawresponse
+
+    @property
+    def url(self):
+        return self.rawresponse.url
+
+    @property
+    def status_code(self):
+        return self.rawresponse.status_code  # int
+
+    @property
+    def headers(self):
+        return self.rawresponse.headers  # Dict
+
+    @property
+    def content(self):
+        return self.rawresponse.content  # bytes
