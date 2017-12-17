@@ -1,3 +1,4 @@
+import json
 import functools
 from requests import sessions
 from . import models
@@ -27,7 +28,7 @@ _registry = {
 
 def request(method, url, factory=None, **kwargs):
     global _registry
-    factory or _registry["factory"]
+    factory = factory or _registry["factory"]
     with factory() as session:
         return session.request(method=method, url=url, **kwargs)
 
@@ -45,7 +46,7 @@ def monkeypatch(*, on_request, on_response, force=False):
     if original is None:
         _registry["original"] = requests.api.request
 
-    _registry["factory"] = create_factory(on_request, on_response)
+    _registry["factory"] = create_factory(on_request=on_request, on_response=on_response)
 
     requests.request = request
     requests.api.request = request
@@ -78,7 +79,7 @@ class RequestsTracingRequest(models.TracingRequest):
 
     @property
     def headers(self):
-        return self.rawrequest.headers
+        return dict(self.rawrequest.headers)
 
     @property
     def url(self):
@@ -110,8 +111,20 @@ class RequestsTracingResponse(models.TracingResponse):
 
     @property
     def headers(self):
-        return self.rawresponse.headers  # Dict
+        return dict(self.rawresponse.headers)  # Dict
 
     @property
-    def content(self):
+    def rawbody(self):
         return self.rawresponse.content  # bytes
+
+    @property
+    def body(self):
+        if "/json" in self.rawresponse.headers["content-type"]:
+            try:
+                return self.rawresponse.json()
+            except Exception as e:
+                return self.rawresponse.text
+        elif hasattr(self.rawbody, "decode"):
+            return self.rawresponse.text
+        else:
+            return self.rawbody

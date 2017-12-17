@@ -15,15 +15,10 @@ def coerce_response(body, encoding="utf-8"):
         return str(body).encode(encoding)
 
 
-def create_app(handler, content_type='text/plain', encoding="utf-8"):
-    content_type_header = ('Content-type', '{}; charset={}'.format(content_type, encoding))
-
+def create_app(handler, content_type=None, encoding="utf-8", default_content_type="application/json"):
     def app(environ, start_response):
-        nonlocal content_type_header
-
-        if "CONTENT_TYPE" in environ:
-            content_type = environ["CONTENT_TYPE"]
-            content_type_header = ('Content-type', '{}; charset={}'.format(content_type, encoding))
+        detected_content_type = content_type or environ.get("CONTENT_TYPE") or default_content_type
+        content_type_header = ('Content-type', '{}; charset={}'.format(detected_content_type, encoding))
 
         headers = [content_type_header]
         result = handler(environ)
@@ -60,7 +55,9 @@ def echo_handler(environ):
             data = json.loads(environ["wsgi.input"].read(content_length))
             d["jsonbody"] = data
         else:
-            form = cgi.FieldStorage(fp=environ["wsgi.input"], environ=environ, keep_blank_values=True)
+            form = cgi.FieldStorage(
+                fp=environ["wsgi.input"], environ=environ, keep_blank_values=True
+            )
             data = {}
             for k in form:
                 f = form[k]

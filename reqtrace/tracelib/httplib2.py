@@ -1,4 +1,5 @@
 import functools
+import json
 from httplib2 import Http
 from . import models
 
@@ -41,12 +42,13 @@ class Httplib2TracingRequest(models.TracingRequest):
 
 
 class Httplib2TracingResponse(models.TracingResponse):
-    __slots__ = ("request", "rawresponse", "content")
+    __slots__ = ("request", "rawresponse", "rawbody")
+    encoding = "utf-8"  # xxx
 
-    def __init__(self, request, rawresponse, content):
+    def __init__(self, request, rawresponse, rawbody):
         self.request = request
         self.rawresponse = rawresponse
-        self.content = content
+        self.rawbody = rawbody
 
     @property
     def url(self):
@@ -59,6 +61,19 @@ class Httplib2TracingResponse(models.TracingResponse):
     @property
     def headers(self):
         return self.rawresponse
+
+    @property
+    def body(self):
+        content_type = self.headers["content-type"]
+        if "/json" in content_type and self.encoding in content_type:
+            try:
+                return json.loads(self.rawbody.decode(self.encoding))  # xxx:
+            except Exception as e:
+                return self.rawbody.decode(self.encoding)  # xxx:
+        elif hasattr(self.rawbody, "decode"):
+            return self.rawbody.decode(self.encoding)
+        else:
+            return self.rawbody
 
 
 def create_factory(*, on_request, on_response, internal_cls=Http, wrapper_cls=TraceableHttpWrapper):

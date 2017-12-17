@@ -1,8 +1,14 @@
 import requests
 import json
-from reqtrace.mockserve import create_app, echo_handler, create_server
-from reqtrace.util import find_freeport
+import os.path
 import threading
+from reqtrace.mockserve import create_app, echo_handler, create_server
+from reqtrace.tracelib.requests import monkeypatch
+from reqtrace.tracelib.hooks import trace
+
+port = 4444
+dirpath = os.path.join(os.path.dirname(__file__), "data/00requests")
+monkeypatch(on_request=print, on_response=trace(dirpath))
 
 
 def get0(baseurl):
@@ -61,8 +67,7 @@ def options0(baseurl):
     print(response.content)
 
 
-port = find_freeport()
-with create_server(create_app(echo_handler), port=port) as httpd:
+with create_server(create_app(echo_handler, content_type="application/json"), port=port) as httpd:
     th = threading.Thread(target=httpd.serve_forever, daemon=True)
     th.start()
 

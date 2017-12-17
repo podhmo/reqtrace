@@ -14,6 +14,14 @@ class TracingRequest:
     def body(self):
         raise NotImplementedError("bytes?")
 
+    def __json__(self):
+        return {
+            "method": self.method,
+            "url": self.url,
+            "headers": self.headers,
+            "body": self.body,
+        }
+
 
 class TracingResponse:
     def __repr__(self):
@@ -34,5 +42,12 @@ class TracingResponse:
         raise NotImplementedError("dict")
 
     @property
-    def content(self):
+    def body(self):
         raise NotImplementedError("bytes?")
+
+    def __json__(self):
+        return {
+            "status_code": self.status_code,
+            "headers": self.headers,
+            "body": self.body,
+        }

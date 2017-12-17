@@ -1,0 +1,35 @@
+{
+  "request": {
+    "body": null,
+    "headers": {
+      "Accept": "*/*",
+      "Accept-Encoding": "gzip, deflate",
+      "Connection": "keep-alive",
+      "Content-Length": "0",
+      "User-Agent": "python-requests/2.18.4"
+    },
+    "method": "DELETE",
+    "url": "http://localhost:4444/"
+  },
+  "response": {
+    "body": {
+      "accept": "*/*",
+      "accept_encoding": "gzip, deflate",
+      "connection": "keep-alive",
+      "content_length": "0",
+      "content_type": "text/plain",
+      "host": "localhost:4444",
+      "method": "DELETE",
+      "path": "/",
+      "querystring": "",
+      "user_agent": "python-requests/2.18.4"
+    },
+    "headers": {
+      "Content-Length": "252",
+      "Content-type": "application/json; charset=utf-8",
+      "Date": "Sun, 17 Dec 2017 10:30:45 GMT",
+      "Server": "WSGIServer/0.2 CPython/3.6.2"
+    },
+    "status_code": 200
+  }
+}
