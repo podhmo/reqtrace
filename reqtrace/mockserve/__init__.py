@@ -1,7 +1,7 @@
 from wsgiref.simple_server import make_server
 from .util import find_freeport
 from .core import create_app  # noqa
-from .echo import echo_handler  # noqa
+from .echohandler import echohandler  # noqa
 
 
 def create_server(app, host='', port=None):

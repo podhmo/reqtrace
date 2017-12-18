@@ -2,7 +2,7 @@ import requests
 import json
 import os.path
 import threading
-from reqtrace.mockserve import create_app, echo_handler, create_server
+from reqtrace.mockserve import create_app, echohandler, create_server
 from reqtrace.tracelib.requests import monkeypatch
 from reqtrace.tracelib.hooks import trace
 
@@ -67,7 +67,7 @@ def options0(baseurl):
     print(response.content)
 
 
-with create_server(create_app(echo_handler, content_type="application/json"), port=port) as httpd:
+with create_server(create_app(echohandler, content_type="application/json"), port=port) as httpd:
     th = threading.Thread(target=httpd.serve_forever, daemon=True)
     th.start()
 

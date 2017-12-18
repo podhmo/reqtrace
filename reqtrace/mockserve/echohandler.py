@@ -2,7 +2,7 @@ import cgi
 import json
 
 
-def echo_handler(environ):
+def echohandler(environ):
     d = {
         "method": environ["REQUEST_METHOD"],
         "path": environ["PATH_INFO"],
