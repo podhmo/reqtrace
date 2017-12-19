@@ -1,6 +1,34 @@
+import urllib.parse as parselib
+from ..langhelpers import reify
+
+
+class URLAnalyzer:
+    __slots__ = ("url", "parsed")
+
+    def __init__(self, url):
+        self.url = url
+        self.parsed = parselib.urlparse(url)
+
+    @property
+    def host(self):
+        return self.parsed.netloc
+
+    @property
+    def path(self):
+        return self.parsed.path
+
+    @property
+    def queries(self):
+        return arselib.parse_qsl(self.parsed.query)
+
+
 class TracingRequest:
     def __repr__(self):
         return "<{self.__class__.__name__} url={self.url!r}>".format(self=self)
+
+    @reify
+    def urlanalyzer(self):
+        return URLAnalyzer(self.url)
 
     @property
     def headers(self):
@@ -8,11 +36,14 @@ class TracingRequest:
 
     @property
     def method(self):
-        raise NotImplementedError("dict")
+        raise NotImplementedError("str")
 
     @property
     def body(self):
         raise NotImplementedError("bytes?")
+
+    def modify_url(self, url):
+        raise NotImplementedError("")
 
     def __json__(self):
         return {

@@ -1,4 +1,3 @@
-import json
 import functools
 from requests import sessions
 from . import models
@@ -11,9 +10,10 @@ class TraceableHTTPAdapter:
         self.on_response = on_response
 
     def send(self, request, *args, **kwargs):
-        self.on_request(request)  # xxx:
-        response = self.internal.send(request, *args, **kwargs)
-        self.on_response(RequestsTracingResponse(RequestsTracingRequest(request), response))
+        request = RequestsTracingRequest(request)
+        self.on_request(request)
+        response = self.internal.send(request.rawrequest, *args, **kwargs)
+        self.on_response(RequestsTracingResponse(request, response))
         return response
 
     def close(self):
@@ -92,6 +92,9 @@ class RequestsTracingRequest(models.TracingRequest):
     @property
     def body(self):
         return self.rawrequest.body
+
+    def modify_url(self, url):
+        self.rawrequest.url = url
 
 
 class RequestsTracingResponse(models.TracingResponse):

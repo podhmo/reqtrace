@@ -24,12 +24,16 @@ def create_app(
 
         headers = [content_type_header]
         result = handler(environ)
-
-        if isinstance(result, tuple) and len(result) == 2:
-            body, code = result
+        code = 200
+        if isinstance(result, tuple):
+            if len(result) == 2:
+                body, code = result
+            elif len(result) >= 3:
+                body, code, headers = result[:3]
+            else:
+                body = result
         else:
             body = result
-            code = 200
 
         status = "{} {}".format(code, get_reason_from_int(code))
         start_response(status, headers)

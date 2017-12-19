@@ -40,6 +40,9 @@ class Httplib2TracingRequest(models.TracingRequest):
     def body(self):
         return self.kwargs.get("body")
 
+    def modify_url(self, url):
+        self.url = url
+
 
 class Httplib2TracingResponse(models.TracingResponse):
     __slots__ = ("request", "rawresponse", "rawbody")
