@@ -9,17 +9,17 @@ def _extract_body(environ):
 
     if environ.get("CONTENT_TYPE", "").endswith("/json"):
         data = json.loads(environ["wsgi.input"].read(content_length))
-        return {"jsonbody": data}
+        return {"body": data}
     else:
         form = cgi.FieldStorage(fp=environ["wsgi.input"], environ=environ, keep_blank_values=True)
-        data = {}
+        data = []
         for k in form:
             f = form[k]
             if isinstance(f, list):
-                data[k] = [x.value for x in f]
+                data.extend([(k, x.value) for x in f])
             else:
-                data[k] = f.value
-        return {"formdata": data}
+                data.append((k, f.value))
+        return {"body": sorted(data)}
 
 
 def echohandler(environ):

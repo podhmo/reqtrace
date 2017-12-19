@@ -13,7 +13,6 @@ def genkey(extractor, source):
     d.update(extractor.extract_urlinfo(source))
     d.update(extractor.extract_body(source))
     s = json.dumps(d, sort_keys=True).encode("utf-8")
-    print("@", s)
     return hashlib.sha224(s).hexdigest()
 
 
@@ -48,15 +47,19 @@ class TracedDataExtractor:
             "method": data["request"]["method"],
             "host": parsed.netloc,
             "path": parsed.path,
-            "query": sorted(parselib.parse_qsl(data["request"].get("querystring", ""))),
+            "query": sorted(parselib.parse_qsl(parsed.query)),
         }
 
     def extract_body(self, data):
         d = {}
         request_data = data["request"]
-        for k in ["jsonbody", "formdata"]:
+        for k in ["body"]:
             if k in request_data:
-                d[k] = request_data[k]
+                headers = request_data["headers"]
+                if "json" in headers.get("Content-Type", "") or "json" in headers.get("content-type", ""):
+                    d[k] = json.loads(request_data[k])
+                else:
+                    d[k] = sorted(parselib.parse_qsl(request_data[k]))
         return d
 
 
@@ -90,7 +93,7 @@ def create_mirrorhandler(
         status_code = response_dict["status_code"]
         headers = list(response_dict["headers"].items())
 
-        if "/json" in response_dict["headers"].get("Content-type", ""):
+        if "/json" in response_dict["headers"].get("Content-Type", ""):
             return response_dict["body"], status_code, headers
         else:
             return response_dict.get("body", ""), status_code, headers

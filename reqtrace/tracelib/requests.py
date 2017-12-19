@@ -1,4 +1,5 @@
 import functools
+import urllib.parse as parselib
 from requests import sessions
 from . import models
 
@@ -84,6 +85,18 @@ class RequestsTracingRequest(models.TracingRequest):
     @property
     def url(self):
         return self.rawrequest.url
+
+    @property
+    def host(self):
+        return parselib.urlparse(self.url).netloc
+
+    @property
+    def path(self):
+        return parselib.urlparse(self.url).path
+
+    @property
+    def queries(self):
+        return parselib.parselib.urlparse(self.url).query
 
     @property
     def method(self):

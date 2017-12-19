@@ -19,7 +19,7 @@ def create_app(
     def app(environ, start_response):
         detected_content_type = content_type or environ.get("CONTENT_TYPE") or default_content_type
         content_type_header = (
-            'Content-type', '{}; charset={}'.format(detected_content_type, encoding)
+            'Content-Type', '{}; charset={}'.format(detected_content_type, encoding)
         )
 
         headers = [content_type_header]

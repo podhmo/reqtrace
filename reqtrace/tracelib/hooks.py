@@ -24,7 +24,8 @@ def trace(dirpath=None, logger=logger):
         if not os.path.exists(dirpath):
             os.makedirs(dirpath, exist_ok=True)
 
-        with open(os.path.join(dirpath, no + filename + ".json"), "w") as wf:
+        outpath = os.path.join(dirpath, "{}{}_{}.json".format(no, response.request.method.lower(), filename))
+        with open(outpath, "w") as wf:
             json.dump(d, wf, sort_keys=True, indent=2, ensure_ascii=False)
 
     return _trace

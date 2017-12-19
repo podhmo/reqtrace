@@ -19,7 +19,7 @@ class URLAnalyzer:
 
     @property
     def queries(self):
-        return arselib.parse_qsl(self.parsed.query)
+        return parselib.parse_qsl(self.parsed.query)
 
 
 class TracingRequest:
@@ -46,12 +46,13 @@ class TracingRequest:
         raise NotImplementedError("")
 
     def __json__(self):
-        return {
+        d = {
             "method": self.method,
             "url": self.url,
             "headers": self.headers,
             "body": self.body,
         }
+        return d
 
 
 class TracingResponse:
