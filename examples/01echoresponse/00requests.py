@@ -2,7 +2,8 @@ import requests
 import json
 import os.path
 import threading
-from reqtrace.mockserve import create_app, echohandler, create_server
+from reqtrace.mockserve import create_app, create_server
+from reqtrace.mockserve.echohandler import echohandler
 from reqtrace.tracelib.requests import monkeypatch
 from reqtrace.tracelib.hooks import trace
 
@@ -30,7 +31,7 @@ def get2(baseurl):
 
 def post0(baseurl):
     payload = {"key": "value", "items": ["x", "y", "z"]}
-    response = requests.post(baseurl, data=payload)
+    response = requests.post(baseurl, data=payload, params={"q": "foo"})
     print(response.json())
 
 
