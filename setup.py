@@ -13,6 +13,7 @@ except IOError:
 install_requires = [
     "requests",
     "httplib2",
+    "magicalimport",
 ]
 
 googleapi_extras = [

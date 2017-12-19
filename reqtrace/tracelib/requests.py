@@ -1,6 +1,6 @@
 import functools
 import urllib.parse as parselib
-from requests import sessions
+from requests.sessions import Session
 from . import models
 
 
@@ -21,10 +21,7 @@ class TraceableHTTPAdapter:
         return self.internal.close()
 
 
-_registry = {
-    "original": None,
-    "factory": None,
-}
+_registry = {"original": None, "factory": None, "originalSession": None}
 
 
 def request(method, url, factory=None, **kwargs):
@@ -34,39 +31,66 @@ def request(method, url, factory=None, **kwargs):
         return session.request(method=method, url=url, **kwargs)
 
 
-def monkeypatch(*, on_request, on_response, force=False):
+def monkeypatch(*, on_request, on_response, force=False, pip=False):
     global _registry
 
     import requests
-    import requests.api
+    from requests import api
+    from requests import sessions
     original = _registry.get("original")
 
     if original is not None and not force:
         return
 
     if original is None:
-        _registry["original"] = requests.api.request
+        original = _registry["original"] = requests.api.request
+
+    class _Session(Session):
+        @functools.wraps(Session.__init__)
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            activate_tracing_hook(self, on_request=on_request, on_response=on_response)
 
     _registry["factory"] = create_factory(on_request=on_request, on_response=on_response)
+    _registry["originalSession"] = Session
 
     requests.request = request
-    requests.api.request = request
+    api.request = request
+    requests.Session = _Session
+    sessions.Session = _Session
+    if pip:
+        # hmm.
+        import pip.download
+        import pip.basecommand
+        _registry["originalPipSession"] = pip.download.PipSession
+
+        class _PipSession(pip.download.PipSession):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                activate_tracing_hook(self, on_request=on_request, on_response=on_response)
+
+        # pip.download.PipSession = _PipSession  # hack
+        pip.basecommand.PipSession = _PipSession
+
+
+def activate_tracing_hook(s, *, on_request, on_response, wrapper_cls=TraceableHTTPAdapter):
+    s.mount(
+        "http://",
+        wrapper_cls(s.get_adapter("http://"), on_request=on_request, on_response=on_response)
+    )
+    s.mount(
+        "https://",
+        wrapper_cls(s.get_adapter("https://"), on_request=on_request, on_response=on_response)
+    )
 
 
 def create_factory(
-    *, on_request, on_response, internal_cls=sessions.Session, wrapper_cls=TraceableHTTPAdapter
+    *, on_request, on_response, internal_cls=Session, wrapper_cls=TraceableHTTPAdapter
 ):
     @functools.wraps(internal_cls)
     def factory(*args, **kwargs):
         s = internal_cls(*args, **kwargs)
-        s.mount(
-            "http://",
-            wrapper_cls(s.get_adapter("http://"), on_request=on_request, on_response=on_response)
-        )
-        s.mount(
-            "https://",
-            wrapper_cls(s.get_adapter("https://"), on_request=on_request, on_response=on_response)
-        )
+        activate_tracing_hook(s, on_request=on_request, on_response=on_response)
         return s
 
     return factory
@@ -104,7 +128,10 @@ class RequestsTracingRequest(models.TracingRequest):
 
     @property
     def body(self):
-        return self.rawrequest.body
+        body = self.rawrequest.body
+        if hasattr(body, "decode"):
+            return body.decode("utf-8")  # xxx
+        return body
 
     def modify_url(self, url):
         self.rawrequest.url = url
@@ -135,7 +162,15 @@ class RequestsTracingResponse(models.TracingResponse):
 
     @property
     def body(self):
-        if "/json" in self.rawresponse.headers["content-type"]:
+        content_type = self.rawresponse.headers["content-type"]
+        if "/xml" in content_type and not self.rawresponse.raw.seekable():
+            import io
+            raw = self.rawresponse.raw
+            rawbody = raw._fp.read()
+            raw._fp = io.BytesIO(rawbody)  # xxx:
+            self.rawresponse._content = rawbody
+
+        if "/json" in content_type:
             try:
                 return self.rawresponse.json()
             except Exception as e:

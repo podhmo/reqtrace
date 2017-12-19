@@ -13,7 +13,7 @@ def trace(dirpath=None, logger=logger):
     dirpath = dirpath or "."
 
     def _trace(response):
-        logger.debug("traced, {}".format(response.url))
+        logger.info("traced %s", response.url)
         nonlocal i
         filename = response.url.replace("/", "_")
         no = "{:04}".format(i)
@@ -24,7 +24,9 @@ def trace(dirpath=None, logger=logger):
         if not os.path.exists(dirpath):
             os.makedirs(dirpath, exist_ok=True)
 
-        outpath = os.path.join(dirpath, "{}{}_{}.json".format(no, response.request.method.lower(), filename))
+        outpath = os.path.join(
+            dirpath, "{}{}_{}.json".format(no, response.request.method.lower(), filename)
+        )
         with open(outpath, "w") as wf:
             json.dump(d, wf, sort_keys=True, indent=2, ensure_ascii=False)
 
