@@ -1,7 +1,10 @@
+import io
 import functools
+import logging
 import urllib.parse as parselib
 from requests.sessions import Session
 from . import models
+logger = logging.getLogger(__name__)
 
 
 class TraceableHTTPAdapter:
@@ -163,18 +166,32 @@ class RequestsTracingResponse(models.TracingResponse):
     @property
     def body(self):
         content_type = self.rawresponse.headers["content-type"]
-        if "/xml" in content_type and not self.rawresponse.raw.seekable():
-            import io
-            raw = self.rawresponse.raw
-            rawbody = raw._fp.read()
-            raw._fp = io.BytesIO(rawbody)  # xxx:
-            self.rawresponse._content = rawbody
-
-        if "/json" in content_type:
+        if "/xml" in content_type:
+            if not self.rawresponse.raw.seekable():
+                raw = self.rawresponse.raw
+                rawbody = raw._fp.read()
+                raw._fp = io.BytesIO(rawbody)  # xxx:
+                self.rawresponse._content = rawbody
+                self.rawresponse._content_consumed = True
+            else:
+                rawbody = self.rawbody
+            if hasattr(rawbody, "decode"):
+                return self.rawresponse.text
+            return rawbody
+        elif "/json" in content_type:
             try:
                 return self.rawresponse.json()
             except Exception as e:
+                logger.warn(str(e), exc_info=True)
                 return self.rawresponse.text
+        elif "binary/" in content_type or "/octet-stream" in content_type:
+            if not self.rawresponse.raw.seekable():
+                raw = self.rawresponse.raw
+                rawbody = raw._fp.read()
+                raw._fp = io.BytesIO(rawbody)
+                self.rawresponse._content = rawbody
+                self.rawresponse._content_consumed = True
+            return rawbody
         elif hasattr(self.rawbody, "decode"):
             return self.rawresponse.text
         else:

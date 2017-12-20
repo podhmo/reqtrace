@@ -45,13 +45,15 @@ class TracingRequest:
     def modify_url(self, url):
         raise NotImplementedError("")
 
-    def __json__(self):
+    def __serialize__(self):
         d = {
             "method": self.method,
             "url": self.url,
             "headers": self.headers,
             "body": self.body,
         }
+        if isinstance(d.get("body"), bytes):
+            d["pickle"] = True
         return d
 
 
@@ -77,9 +79,12 @@ class TracingResponse:
     def body(self):
         raise NotImplementedError("bytes?")
 
-    def __json__(self):
-        return {
+    def __serialize__(self):
+        d = {
             "status_code": self.status_code,
             "headers": self.headers,
             "body": self.body,
         }
+        if isinstance(d.get("body"), bytes):
+            d["pickle"] = True
+        return d
