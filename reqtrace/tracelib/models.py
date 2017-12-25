@@ -21,6 +21,10 @@ class URLAnalyzer:
     def queries(self):
         return parselib.parse_qsl(self.parsed.query)
 
+    @property
+    def querydict(self):
+        return parselib.parse_qs(self.parsed.query)
+
 
 class TracingRequest:
     def __repr__(self):
@@ -46,9 +50,13 @@ class TracingRequest:
         raise NotImplementedError("")
 
     def __serialize__(self):
+        a = self.urlanalyzer
         d = {
             "method": self.method,
             "url": self.url,
+            "host": a.host,
+            "queries": a.queries,
+            "path": a.path,
             "headers": self.headers,
             "body": self.body,
         }

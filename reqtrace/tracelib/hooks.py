@@ -5,7 +5,10 @@ import pickle
 from collections import OrderedDict
 logger = logging.getLogger(__name__)
 
+
 # todo refactoring
+def noop(target):
+    pass
 
 
 def trace(dirpath=None, logger=logger):
