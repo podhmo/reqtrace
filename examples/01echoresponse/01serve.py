@@ -27,6 +27,7 @@ def main():
         # requests.get("http://localhost:4444/")
         httpd.serve_forever()
 
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
     main()

@@ -7,6 +7,8 @@ def _extract_body(environ):
     if content_length == 0:
         return {}
 
+    # todo: binary format support
+
     if environ.get("CONTENT_TYPE", "").endswith("/json"):
         data = json.loads(environ["wsgi.input"].read(content_length))
         return {"body": data}
