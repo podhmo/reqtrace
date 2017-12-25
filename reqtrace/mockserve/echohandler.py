@@ -2,15 +2,17 @@ import cgi
 import json
 
 
-def _extract_body(environ):
+def _extract_body(environ, encoding="utf-8"):
     content_length = int(environ.get("CONTENT_LENGTH") or 0)
     if content_length == 0:
         return {}
 
     # todo: binary format support
-
     if environ.get("CONTENT_TYPE", "").endswith("/json"):
-        data = json.loads(environ["wsgi.input"].read(content_length))
+        b = environ["wsgi.input"].read(content_length)
+        if isinstance(b, bytes):  # for python3.5
+            b = b.decode(encoding)
+        data = json.loads(b)
         return {"body": data}
     else:
         form = cgi.FieldStorage(fp=environ["wsgi.input"], environ=environ, keep_blank_values=True)
@@ -24,7 +26,7 @@ def _extract_body(environ):
         return {"body": sorted(data)}
 
 
-def echohandler(environ):
+def echohandler(environ, encoding="utf-8"):
     d = {
         "method": environ["REQUEST_METHOD"],
         "path": environ["PATH_INFO"],
@@ -36,5 +38,5 @@ def echohandler(environ):
         if k.startswith("HTTP_"):
             d[k.replace("HTTP_", "").lower()] = environ[k]
 
-    d.update(_extract_body(environ))
+    d.update(_extract_body(environ, encoding=encoding))
     return d, 200

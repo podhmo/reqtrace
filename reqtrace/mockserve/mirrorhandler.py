@@ -17,8 +17,9 @@ def genkey(extractor, source):
 
 
 class RequestInfoExtractor:
-    def __init__(self, origin_host_key):
+    def __init__(self, origin_host_key, encoding="utf-8"):
         self.origin_host_key = origin_host_key
+        self.encoding = encoding
 
     def extract_urlinfo(self, environ):
         queries = []
@@ -37,7 +38,7 @@ class RequestInfoExtractor:
         }
 
     def extract_body(self, environ):
-        return _extract_body(environ)
+        return _extract_body(environ, encoding=self.encoding)
 
 
 class TracedDataExtractor:
