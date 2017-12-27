@@ -1,2 +1,2 @@
-from reqtrace.main import main
+from reqtrace.commands.reqtrace import main
 main()

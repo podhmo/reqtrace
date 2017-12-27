@@ -1,5 +1,6 @@
 import cgi
 import json
+import wsgiref.util
 
 
 def _extract_body(environ, encoding="utf-8"):
@@ -33,6 +34,7 @@ def echohandler(environ, encoding="utf-8"):
         "querystring": environ["QUERY_STRING"],
         "content_type": environ["CONTENT_TYPE"],
         "content_length": environ["CONTENT_LENGTH"],
+        "url": wsgiref.util.request_uri(environ),
     }
     for k in environ.keys():
         if k.startswith("HTTP_"):

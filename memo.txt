@@ -2,3 +2,10 @@
 - proxy (changing access url)
 - tracing (capturing request and response)
 - replaying
+- request count
+
+support
+
+- binary
+- basic auth
+- oauth dancing
