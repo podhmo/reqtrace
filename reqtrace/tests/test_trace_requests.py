@@ -90,13 +90,13 @@ class Tests(unittest.TestCase):
             C(
                 path="/",
                 params=None,
-                data=json.dumps({"name": "foo", "age": 20}),
+                data=json.dumps({
+                    "name": "foo",
+                    "age": 20
+                }),
                 headers={"content-type": "application/json"},
                 expected=Expected(
-                    queries=[],
-                    method="POST",
-                    status_code=200,
-                    body='{"name": "foo", "age": 20}'
+                    queries=[], method="POST", status_code=200, body='{"name": "foo", "age": 20}'
                 ),
             ),
         ]
@@ -106,7 +106,9 @@ class Tests(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as dirpath:
                     with background_server(self._makeEchoApp()) as baseurl:
                         s = self._makeSession(dirpath)
-                        response = s.post(baseurl + c.path, params=c.params, data=c.data, headers=c.headers)
+                        response = s.post(
+                            baseurl + c.path, params=c.params, data=c.data, headers=c.headers
+                        )
                     with open(os.path.join(dirpath, os.listdir(dirpath)[0])) as rf:
                         traced = json.load(rf)
                     # response
