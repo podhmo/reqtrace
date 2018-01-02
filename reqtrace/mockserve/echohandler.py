@@ -1,5 +1,6 @@
 import cgi
 import json
+import urllib.parse as parselib
 import wsgiref.util
 
 
@@ -41,4 +42,13 @@ def echohandler(environ, encoding="utf-8"):
             d[k.replace("HTTP_", "").lower()] = environ[k]
 
     d.update(_extract_body(environ, encoding=encoding))
-    return d, 200
+    status = _getstatus(environ)
+    return d, status
+
+
+def _getstatus(environ, default="200"):
+    qd = parselib.parse_qs(environ["QUERY_STRING"])
+    v = qd.get("status", default)
+    if isinstance(v, (list, tuple)):
+        v = v[0]
+    return int(v)

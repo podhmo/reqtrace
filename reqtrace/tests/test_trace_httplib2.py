@@ -41,6 +41,11 @@ class Tests(unittest.TestCase):
                     queries=[["name", "foo"], ["name", "bar"]], method="GET", status_code=200
                 )
             ),
+            C(
+                path="/notfound",
+                params={"status": "404"},
+                expected=Expected(queries=[["status", "404"]], method="GET", status_code=404)
+            ),
         ]
 
         for c in candidates:
