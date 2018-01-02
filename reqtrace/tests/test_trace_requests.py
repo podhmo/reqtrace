@@ -2,6 +2,7 @@ import unittest
 import tempfile
 import os
 import json
+import urllib.parse as parselib
 from collections import namedtuple
 from reqtrace.testing import background_server
 
@@ -62,7 +63,7 @@ class Tests(unittest.TestCase):
                     self.assertEqual(None, traced["request"]["body"])
 
     def test_post(self):
-        C = namedtuple("C", "path, params, data, headers, expected")
+        C = namedtuple("C", "path, params, data, headers, expected, parse")
         Expected = namedtuple("Expected", "queries, method, status_code, body")
 
         candidates = [
@@ -74,6 +75,7 @@ class Tests(unittest.TestCase):
                 expected=Expected(
                     queries=[], method="POST", status_code=200, body="items=x&items=y&items=z"
                 ),
+                parse=parselib.parse_qs
             ),
             C(
                 path="/",
@@ -86,6 +88,7 @@ class Tests(unittest.TestCase):
                     status_code=200,
                     body="key=value&items=x&items=y&items=z"
                 ),
+                parse=parselib.parse_qs
             ),
             C(
                 path="/",
@@ -98,6 +101,7 @@ class Tests(unittest.TestCase):
                 expected=Expected(
                     queries=[], method="POST", status_code=200, body='{"name": "foo", "age": 20}'
                 ),
+                parse=json.loads
             ),
         ]
 
@@ -119,4 +123,6 @@ class Tests(unittest.TestCase):
                     self.assertEqual(c.expected.method, traced["request"]["method"])
                     self.assertEqual(baseurl.replace("http://", ""), traced["request"]["host"])
                     self.assertEqual(c.expected.queries, traced["request"]["queries"])
-                    self.assertEqual(c.expected.body, traced["request"]["body"])
+                    self.assertDictEqual(
+                        c.parse(c.expected.body), c.parse(traced["request"]["body"])
+                    )

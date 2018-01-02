@@ -56,7 +56,9 @@ class Tests(unittest.TestCase):
                         traced = json.load(rf)
 
                     # response
-                    self.assertEqual(json.loads(body.decode("utf-8")), traced["response"]["body"])
+                    self.assertDictEqual(
+                        json.loads(body.decode("utf-8")), traced["response"]["body"]
+                    )
                     self.assertEqual(c.expected.status_code, traced["response"]["status_code"])
 
                     # request
@@ -66,7 +68,7 @@ class Tests(unittest.TestCase):
                     self.assertEqual(None, traced["request"]["body"])
 
     def test_post(self):
-        C = namedtuple("C", "path, params, data, headers, expected")
+        C = namedtuple("C", "path, params, data, headers, expected, parse")
         Expected = namedtuple("Expected", "queries, method, status_code, body")
 
         candidates = [
@@ -78,6 +80,7 @@ class Tests(unittest.TestCase):
                 expected=Expected(
                     queries=[], method="POST", status_code=200, body="items=x&items=y&items=z"
                 ),
+                parse=parselib.parse_qs
             ),
             C(
                 path="/",
@@ -92,6 +95,7 @@ class Tests(unittest.TestCase):
                     status_code=200,
                     body="key=value&items=x&items=y&items=z"
                 ),
+                parse=parselib.parse_qs
             ),
             C(
                 path="/",
@@ -104,6 +108,7 @@ class Tests(unittest.TestCase):
                 expected=Expected(
                     queries=[], method="POST", status_code=200, body='{"name": "foo", "age": 20}'
                 ),
+                parse=json.loads
             ),
         ]
 
@@ -118,11 +123,15 @@ class Tests(unittest.TestCase):
                     with open(os.path.join(dirpath, os.listdir(dirpath)[0])) as rf:
                         traced = json.load(rf)
                     # response
-                    self.assertEqual(json.loads(body), traced["response"]["body"])
+                    self.assertDictEqual(
+                        json.loads(body.decode("utf-8")), traced["response"]["body"]
+                    )
                     self.assertEqual(c.expected.status_code, traced["response"]["status_code"])
 
                     # request
                     self.assertEqual(c.expected.method, traced["request"]["method"])
                     self.assertEqual(baseurl.replace("http://", ""), traced["request"]["host"])
                     self.assertEqual(c.expected.queries, traced["request"]["queries"])
-                    self.assertEqual(c.expected.body, traced["request"]["body"])
+                    self.assertDictEqual(
+                        c.parse(c.expected.body), c.parse(traced["request"]["body"])
+                    )
