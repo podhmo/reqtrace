@@ -1,7 +1,10 @@
 import functools
+import logging
+import io
 import json
 from httplib2 import Http
 from . import models
+logger = logging.getLogger(__name__)
 
 
 class TraceableHttpWrapper:
@@ -68,13 +71,24 @@ class Httplib2TracingResponse(models.TracingResponse):
     @property
     def body(self):
         content_type = self.headers["content-type"]
-        if "/json" in content_type and self.encoding in content_type:
+        text = None
+        if "/json" in content_type:
             try:
-                return json.loads(self.rawbody.decode(self.encoding))  # xxx:
+                text = self.rawbody.decode(self.encoding)
+                return json.loads(text)  # xxx:
             except Exception as e:
-                return self.rawbody.decode(self.encoding)  # xxx:
+                logger.warn(str(e), exc_info=True)
+                return text or self.rawbody
+        elif "binary/" in content_type or "/octet-stream" in content_type or (
+            "image/" in content_type and "image/svg" != content_type
+        ):
+            return self.rawbody
         elif hasattr(self.rawbody, "decode"):
-            return self.rawbody.decode(self.encoding)
+            try:
+                text = self.rawbody.decode(self.encoding)
+            except Exception as e:
+                logger.warn(str(e), exc_info=True)
+            return text or self.rawbody
         else:
             return self.rawbody
 
@@ -86,3 +100,28 @@ def create_factory(*, on_request, on_response, internal_cls=Http, wrapper_cls=Tr
         return wrapper_cls(internal, on_request=on_request, on_response=on_response)
 
     return factory
+
+
+_registry = {"original": None, "factory": None}
+
+
+def monkeypatch(*, on_request, on_response, force=False):
+    import httplib2
+    original = _registry.get("original")
+
+    if original is not None and not force:
+        return
+
+    if original is None:
+        original = _registry["original"] = Http
+
+    factory = _registry["factory"] = create_factory(on_request=on_request, on_response=on_response)
+
+    class _Http:
+        def __init__(self, *args, **kwargs):
+            self.core = factory(*args, **kwargs)
+
+        def __getattr__(self, name):
+            return getattr(self.core, name)
+
+    httplib2.Http = _Http

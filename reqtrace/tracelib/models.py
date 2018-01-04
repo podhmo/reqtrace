@@ -51,13 +51,17 @@ class TracingRequest:
 
     def __serialize__(self):
         a = self.urlanalyzer
+        headers = self.headers
+        if headers and isinstance(next(iter(headers.keys())), bytes):
+            headers = {k.decode("utf-8"): v.decode("utf-8") for k, v in headers.items()}  # xxx:
+
         d = {
             "method": self.method,
             "url": self.url,
             "host": a.host,
             "queries": a.queries,
             "path": a.path,
-            "headers": self.headers,
+            "headers": headers,
             "body": self.body,
         }
         if isinstance(d.get("body"), bytes):

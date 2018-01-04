@@ -184,7 +184,9 @@ class RequestsTracingResponse(models.TracingResponse):
             except Exception as e:
                 logger.warn(str(e), exc_info=True)
                 return self.rawresponse.text
-        elif "binary/" in content_type or "/octet-stream" in content_type:
+        elif "binary/" in content_type or "/octet-stream" in content_type or (
+            "image/" in content_type and "image/svg" != content_type
+        ):
             if not self.rawresponse.raw.seekable():
                 raw = self.rawresponse.raw
                 rawbody = raw._fp.read()

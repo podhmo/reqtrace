@@ -12,6 +12,7 @@ from importlib.machinery import SourceFileLoader
 from magicalimport import import_symbol
 from reqtrace.tracelib.hooks import trace
 from reqtrace.tracelib.requests import monkeypatch as monkeypatch_requests
+from reqtrace.tracelib.httplib2 import monkeypatch as monkeypatch_httplib2
 logger = logging.getLogger(__name__)
 
 
@@ -50,5 +51,8 @@ def main():
         args.outdir = os.path.join(args.outdir, uuid.uuid4().hex[:8])
     logger.info("outdir is %s", args.outdir)
     usepip = args.command.strip() == "pip"
-    monkeypatch_requests(on_request=noop, on_response=trace(dirpath=args.outdir), pip=usepip)
+
+    hook = trace(dirpath=args.outdir)
+    monkeypatch_requests(on_request=noop, on_response=hook, pip=usepip)
+    monkeypatch_httplib2(on_request=noop, on_response=hook)
     call_file(args.command, extras)
