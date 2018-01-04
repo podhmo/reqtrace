@@ -46,6 +46,12 @@ def trace(dirpath=None, logger=logger):
                 pickle.dump(body, wf)
 
         with open(jsonpath, "w") as wf:
-            json.dump(d, wf, sort_keys=True, indent=2, ensure_ascii=False)
+            json.dump(d, wf, sort_keys=True, indent=2, ensure_ascii=False, default=_convert)
 
     return _trace
+
+
+def _convert(o, encoding="utf-8"):
+    if hasattr(o, "decode"):
+        return o.decode(encoding)
+    raise TypeError("{!r} is not JSON serializable".format(o))
