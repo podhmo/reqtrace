@@ -1,6 +1,5 @@
 import argparse
 import logging
-from functools import partial
 import magicalimport
 from reqtrace.mockserve import create_app, create_server
 from reqtrace.mockserve.echohandler import echohandler

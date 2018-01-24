@@ -13,6 +13,7 @@ def genkey(extractor, source):
     d.update(extractor.extract_urlinfo(source))
     d.update(extractor.extract_body(source))
     s = json.dumps(d, sort_keys=True).encode("utf-8")
+    logger.debug("genkey source: %s", s)
     return hashlib.sha224(s).hexdigest()
 
 
@@ -60,7 +61,9 @@ class TracedDataExtractor:
                 if "json" in headers.get("Content-Type", "") or "json" in headers.get("content-type", ""):
                     d[k] = json.loads(request_data[k])
                 else:
-                    d[k] = sorted(parselib.parse_qsl(request_data[k]))
+                    v = sorted(parselib.parse_qsl(request_data[k]))
+                    if v:
+                        d[k] = v
         return d
 
 
@@ -72,19 +75,19 @@ def create_mirrorhandler(
     origin_host_key="_origin"
 ):
     store = {}
-    extractor_for_data = TracedDataExtractor()
+    extractor_for_traced = TracedDataExtractor()
     for entry in os.scandir(inputdir):
         if entry.is_file() and matcher(entry.path):
             with open(entry.path) as rf:
                 d = loader(rf)
-            k = genkey(extractor_for_data, d)
-            logger.info("generate key: %s (from %s)", k, entry.path)
+            k = genkey(extractor_for_traced, d)
+            logger.info("genkey[file]: %s (filename=%s)", k, entry.path)
             store[k] = d["response"]
 
     def handler(environ, store=store, extractor=RequestInfoExtractor(origin_host_key)):
         k = genkey(extractor, environ)
 
-        fmt = "generate key: %s (from request method=%s, path=%s)"
+        fmt = "genkey[req]: %s (method=%s, path=%s)"
         logger.info(fmt, k, environ["REQUEST_METHOD"], environ["PATH_INFO"])
 
         if k not in store:

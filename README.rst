@@ -8,3 +8,10 @@ support
 
 - requests
 - httplib2
+
+commands
+----------------------------------------
+
+- reqtrace.commands.echo
+- reqtrace.commands.reqtrace
+

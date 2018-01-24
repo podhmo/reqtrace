@@ -182,7 +182,7 @@ class RequestsTracingResponse(models.TracingResponse):
             try:
                 return self.rawresponse.json()
             except Exception as e:
-                logger.warn(str(e), exc_info=True)
+                logger.warning(str(e), exc_info=True)
                 return self.rawresponse.text
         elif "binary/" in content_type or "/octet-stream" in content_type or (
             "image/" in content_type and "image/svg" != content_type
