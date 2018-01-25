@@ -63,13 +63,14 @@ class RequestTraceMirrorTests(unittest.TestCase):
     def test_it(self):
         from reqtrace.tracelib.requests import create_factory as req_create_factory
         from reqtrace.tracelib.httplib2 import create_factory as httplib2_create_factory
-        from reqtrace.tracelib.hooks import noop, trace
 
         from reqtrace.mockserve.echohandler import echohandler
         from reqtrace.mockserve import create_app, create_server
+        from reqtrace.tracelib.hooks import noop, trace
 
         from reqtrace.mockserve.mirrorhandler import create_mirrorhandler
         from reqtrace.util import find_freeport
+        from reqtrace.tracelib.hooks import replay_redirect
 
         C = namedtuple("C", "trace, replay, method, msg")
 
@@ -77,9 +78,10 @@ class RequestTraceMirrorTests(unittest.TestCase):
             C(trace="requests", replay="requests", method="get0", msg="GET /"),
             C(trace="requests", replay="httplib2", method="get0", msg="GET /"),
             C(trace="httplib2", replay="requests", method="get0", msg="GET /"),
+            C(trace="requests", replay="requests", method="get1", msg="GET /?name=foo"),
         ]
 
-        expected_response_store = {}
+        response_store = {}
 
         with tempfile.TemporaryDirectory() as tmpdir:
             port = find_freeport()
@@ -101,37 +103,33 @@ class RequestTraceMirrorTests(unittest.TestCase):
                 logging.basicConfig(level=logging.INFO)
 
                 for c in candidates:
-                    if (c.trace, c.msg) in expected_response_store:
+                    if (c.trace, c.msg) in response_store:
                         continue
                     accessing = accessing_registry[c.trace]
                     client = client_registry[c.trace]
-                    expected_response_store[(c.trace, c.msg)] = getattr(accessing,
-                                                                        c.method)(client, baseurl)
+                    response_store[(c.trace, c.msg)] = getattr(accessing, c.method)(client, baseurl)
                 httpd.shutdown()
 
             mirrorhandler = create_mirrorhandler(tmpdir)
             port2 = find_freeport()
             mirrorurl = "http://localhost:{}".format(port2)
 
-            def replay_redirect(request):
-                request.modify_url("{}?_origin=localhost:{port}".format(mirrorurl, port=port))
+            # yapf:disable
+            replay_client_registry = {
+                "requests": req_create_factory(on_request=replay_redirect(mirrorurl), on_response=noop)(),
+                "httplib2": httplib2_create_factory(on_request=replay_redirect(mirrorurl), on_response=noop)(),
+            }
+            # yapf:enable
 
             with create_server(create_app(mirrorhandler), port=port2) as httpd:
                 th = threading.Thread(target=httpd.serve_forever, daemon=True)
                 th.start()
-
-                replay_client_registry = {
-                    "requests": req_create_factory(on_request=replay_redirect, on_response=noop)(),
-                    "httplib2":
-                    httplib2_create_factory(on_request=replay_redirect, on_response=noop)(),
-                }
-
                 for c in candidates:
                     with self.subTest(msg=c.msg, trace=c.trace, replay=c.replay):
                         client = replay_client_registry[c.replay]
                         accessing = accessing_registry[c.replay]
-                        replay_response = getattr(accessing, c.method)(client, mirrorurl)
-                        trace_response = expected_response_store[(c.trace, c.msg)]
+                        replay_response = getattr(accessing, c.method)(client, baseurl)
+                        trace_response = response_store[(c.trace, c.msg)]
 
                         # xxx:
                         for k in ["user_agent", "connection", "accept"]:
