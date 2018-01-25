@@ -3,12 +3,39 @@ import os.path
 import json
 import pickle
 from collections import OrderedDict
+import urllib.parse as parselib
+from ..url import (
+    append_queries,
+    merge_query,
+)
 logger = logging.getLogger(__name__)
 
 
 # todo refactoring
 def noop(target):
     pass
+
+
+def replay_redirect(redirect):
+    redirect_parsed = parselib.urlparse(redirect)
+
+    def hook(request):
+        parsed = parselib.urlparse(request.url)
+        url = parselib.urlunparse(
+            parsed._replace(
+                scheme=redirect_parsed.scheme,
+                netloc=redirect_parsed.netloc,
+                path=redirect_parsed.path,
+                query=merge_query(redirect_parsed.query, parsed.query)
+            )
+        )
+
+        replaced_url = append_queries(url, _origin=parsed.netloc)
+
+        logger.debug("replaced %s -> %s", request.url, replaced_url)
+        request.modify_url(replaced_url)
+
+    return hook
 
 
 def trace(dirpath=None, logger=logger):

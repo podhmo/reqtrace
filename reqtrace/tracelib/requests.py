@@ -4,6 +4,7 @@ import logging
 import urllib.parse as parselib
 from requests.sessions import Session
 from . import models
+from ..url import append_queries
 logger = logging.getLogger(__name__)
 
 
@@ -138,6 +139,9 @@ class RequestsTracingRequest(models.TracingRequest):
 
     def modify_url(self, url):
         self.rawrequest.url = url
+
+    def append_queries(self, **queries):
+        self.rawrequest.url = append_queries(self.rawrequest.url, **queries)
 
 
 class RequestsTracingResponse(models.TracingResponse):

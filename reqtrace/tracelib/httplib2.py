@@ -1,9 +1,9 @@
 import functools
 import logging
-import io
 import json
 from httplib2 import Http
 from . import models
+from ..url import append_queries
 logger = logging.getLogger(__name__)
 
 
@@ -45,6 +45,9 @@ class Httplib2TracingRequest(models.TracingRequest):
 
     def modify_url(self, url):
         self.url = url
+
+    def append_queries(self, **queries):
+        self.url = append_queries(self.url, **queries)
 
 
 class Httplib2TracingResponse(models.TracingResponse):

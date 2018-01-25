@@ -49,6 +49,9 @@ class TracingRequest:
     def modify_url(self, url):
         raise NotImplementedError("")
 
+    def append_queries(self, **queries):
+        raise NotImplementedError("")
+
     def __serialize__(self):
         a = self.urlanalyzer
         d = {
