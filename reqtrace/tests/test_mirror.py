@@ -79,6 +79,8 @@ class RequestTraceMirrorTests(unittest.TestCase):
             C(trace="requests", replay="httplib2", method="get0", msg="GET /"),
             C(trace="httplib2", replay="requests", method="get0", msg="GET /"),
             C(trace="requests", replay="requests", method="get1", msg="GET /?name=foo"),
+            C(trace="requests", replay="requests", method="get2", msg="GET /?items=x&items=y&items=z"),
+            C(trace="requests", replay="requests", method="post0", msg="POST /?q=foo"),
         ]
 
         response_store = {}

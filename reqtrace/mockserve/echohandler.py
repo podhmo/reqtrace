@@ -17,9 +17,28 @@ def _extract_body(environ, encoding="utf-8"):
         data = json.loads(b)
         return {"body": data}
     else:
-        form = cgi.FieldStorage(fp=environ["wsgi.input"], environ=environ, keep_blank_values=True)
+        form = cgi.FieldStorage(
+            fp=environ["wsgi.input"],
+            environ=environ,
+            keep_blank_values=True,
+            encoding=encoding,
+        )
+        used = []
+        if form.qs_on_post:
+            qsl = parselib.parse_qsl(
+                form.qs_on_post,
+                form.keep_blank_values,
+                form.strict_parsing,
+                encoding=form.encoding,
+                errors=form.errors
+            )
+            used = set(k for k, _ in qsl)
+
         data = []
         for k in form:
+            if k in used:
+                continue  # xxx: the values from query string
+
             f = form[k]
             if isinstance(f, list):
                 data.extend([(k, x.value) for x in f])

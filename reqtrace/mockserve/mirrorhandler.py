@@ -10,8 +10,10 @@ logger = logging.getLogger(__name__)
 
 def genkey(extractor, source):
     d = {}
-    d.update(extractor.extract_urlinfo(source))
-    d.update(extractor.extract_body(source))
+    urlinfo = extractor.extract_urlinfo(source)
+    body = extractor.extract_body(source)
+    d.update(urlinfo)
+    d.update(body)
     s = json.dumps(d, sort_keys=True).encode("utf-8")
     logger.debug("genkey source: %s", s)
     return hashlib.sha224(s).hexdigest()
