@@ -42,15 +42,23 @@ class _RequestAccessing:
 
     def delete0(self, s, baseurl):
         response = s.delete(baseurl)
-        return response.content
+        return response.json()
 
-    def head0(self, s, baseurl):
-        response = s.head(baseurl)
-        return response.content
+    def delete1(self, s, baseurl):
+        response = s.delete(baseurl, params={"q": "foo"})
+        return response.json()
 
-    def options0(self, s, baseurl):
-        response = s.options(baseurl)
-        return response.content
+    def delete2(self, s, baseurl):
+        response = s.delete(baseurl, params={"q": "foo"}, data={"name": "bar"})
+        return response.json()
+
+    # def head0(self, s, baseurl):
+    #     response = s.head(baseurl)
+    #     return response.json()
+
+    # def options0(self, s, baseurl):
+    #     response = s.options(baseurl)
+    #     return response.json()
 
 
 class _HTTPlib2Accessing:
@@ -80,7 +88,16 @@ class RequestTraceMirrorTests(unittest.TestCase):
             C(trace="httplib2", replay="requests", method="get0", msg="GET /"),
             C(trace="requests", replay="requests", method="get1", msg="GET /?name=foo"),
             C(trace="requests", replay="requests", method="get2", msg="GET /?items=x&items=y&items=z"),
-            C(trace="requests", replay="requests", method="post0", msg="POST /?q=foo"),
+            C(trace="requests", replay="requests", method="post0", msg="POST /?q=foo data=[key:value, items:[x, y, z]]"),
+            C(trace="requests", replay="requests", method="post1", msg="POST / data=[key:value0, key:value1]"),
+            C(trace="requests", replay="requests", method="post2", msg="""POST / JSON {"items": ["x", "y", "z"]}"""),
+            # todo: POST file upload
+            C(trace="requests", replay="requests", method="put0", msg="PUT / data=[key:value]"),
+            C(trace="requests", replay="requests", method="delete0", msg="DELETE /"),
+            C(trace="requests", replay="requests", method="delete1", msg="DELETE /?q=foo"),
+            C(trace="requests", replay="requests", method="delete1", msg="DELETE /?q=foo data=[name:bar]"),
+            # C(trace="requests", replay="requests", method="head0", msg="HEAD /"),
+            # C(trace="requests", replay="requests", method="options0", msg="OPTIONS /"),
         ]
 
         response_store = {}
