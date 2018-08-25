@@ -165,7 +165,7 @@ class RequestsTracingResponse(models.TracingResponse):
 
     @property
     def body(self):
-        content_type = self.rawresponse.headers["content-type"]
+        content_type = self.rawresponse.headers.get("content-type", "text/html")
         if "/xml" in content_type:
             if not self.rawresponse.raw.seekable():
                 raw = self.rawresponse.raw
