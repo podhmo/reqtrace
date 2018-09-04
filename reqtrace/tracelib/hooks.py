@@ -45,10 +45,34 @@ def trace(dirpath=None, logger=logger):
             with open(picklename, "wb") as wf:
                 pickle.dump(body, wf)
 
-        with open(jsonpath, "w") as wf:
-            json.dump(d, wf, sort_keys=True, indent=2, ensure_ascii=False, default=_convert)
+        try:
+            with open(jsonpath, "w") as wf:
+                json.dump(d, wf, sort_keys=True, indent=2, ensure_ascii=False, default=_convert)
+        except Exception as e:
+            try:
+                d = _fix_dict(d)
+                with open(jsonpath, "w") as wf:
+                    json.dump(d, wf, sort_keys=True, indent=2, ensure_ascii=False)
+            except Exception as e:
+                logger.warning("invalid data (saving as pickle)", exc_info=True)
+                body = d["response"].pop("body")
+                picklename = os.path.join(dirpath, "{}response.pickle".format(no))
+                d["response"]["body"] = os.path.basename(picklename)
+                with open(picklename, "wb") as wf:
+                    pickle.dump(body, wf)
 
     return _trace
+
+
+def _fix_dict(o, encoding="utf-8"):
+    if hasattr(o, "decode"):
+        return o.decode(encoding)
+    elif isinstance(o, (list, tuple)):
+        return [_fix_dict(x) for x in o]
+    elif hasattr(o, "keys"):
+        return {_fix_dict(k): _fix_dict(v) for k, v in o.items()}
+    else:
+        return o
 
 
 def _convert(o, encoding="utf-8"):
