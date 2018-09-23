@@ -4,10 +4,7 @@ import os.path
 import shutil
 import uuid
 import argparse
-from importlib.util import (
-    spec_from_file_location,
-    module_from_spec,
-)
+from importlib.util import spec_from_file_location
 from importlib.machinery import SourceFileLoader
 from magicalimport import import_symbol
 from reqtrace.tracelib.hooks import trace
@@ -22,10 +19,9 @@ def call_file(fname, extras):
     if ":" in fname:
         return import_symbol(fname)()
     elif os.path.exists(fname) and not os.path.isdir(fname):
+        # for: python <file>
         spec = spec_from_file_location("__main__", fname)
-        module = module_from_spec(spec)
-        code = spec.loader.get_code(module.__name__)
-        return exec(code, module.__dict__)
+        return SourceFileLoader("__main__", spec.origin).load_module()
 
     cmd_path = shutil.which(fname)
     if cmd_path:
