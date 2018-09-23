@@ -63,17 +63,24 @@ def monkeypatch(*, on_request, on_response, force=False, pip=False):
     sessions.Session = _Session
     if pip:
         # hmm.
-        import pip.download
-        import pip.basecommand
-        _registry["originalPipSession"] = pip.download.PipSession
+        try:
+            import pip.download as pipdownload
+        except ImportError:
+            import pip._internal.download as pipdownload
+        try:
+            import pip.basecommand as pipbasecommand
+        except ImportError:
+            import pip._internal.basecommand as pipbasecommand
 
-        class _PipSession(pip.download.PipSession):
+        _registry["originalPipSession"] = pipdownload.PipSession
+
+        class _PipSession(pipdownload.PipSession):
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 activate_tracing_hook(self, on_request=on_request, on_response=on_response)
 
         # pip.download.PipSession = _PipSession  # hack
-        pip.basecommand.PipSession = _PipSession
+        pipbasecommand.PipSession = _PipSession
 
 
 def activate_tracing_hook(s, *, on_request, on_response, wrapper_cls=TraceableHTTPAdapter):
