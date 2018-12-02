@@ -51,5 +51,7 @@ setup(
     tests_require=tests_require,
     test_suite="reqtrace.tests",
     entry_points="""
+[console_scripts]
+reqtrace=reqtrace.commands.reqtrace:main
 """
 )
