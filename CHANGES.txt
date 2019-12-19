@@ -1,1 +1,3 @@
+0.0.1
 
+- catch up magicalimport 0.8.1

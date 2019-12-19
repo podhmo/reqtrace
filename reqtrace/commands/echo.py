@@ -1,6 +1,5 @@
 import argparse
 import logging
-from functools import partial
 import magicalimport
 from reqtrace.mockserve import create_app, create_server
 from reqtrace.mockserve.echohandler import echohandler
@@ -36,7 +35,7 @@ def main():
     logging.basicConfig(level=args.logging)
     callback = args.callback
     if callback is not None:
-        callback = magicalimport.import_symbol(callback)
+        callback = magicalimport.import_symbol(callback, cwd=True)
     elif args.pdb:
         callback = pdb_callback
     run(port=args.port, callback=callback, pretty=args.pretty)

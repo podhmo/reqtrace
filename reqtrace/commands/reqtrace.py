@@ -19,7 +19,7 @@ def call_file(fname, extras):
     sys.argv = [fname]
     sys.argv.extend(extras)
     if ":" in fname:
-        return import_symbol(fname)()
+        return import_symbol(fname, cwd=True)()
     elif os.path.exists(fname) and not os.path.isdir(fname):
         # for: python <file>
         spec = spec_from_file_location("__main__", fname)
