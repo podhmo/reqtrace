@@ -23,7 +23,7 @@ testing_extras = tests_require + []
 
 setup(
     name="reqtrace",
-    version="0.0.0",
+    version=open("VERSION").read().strip(),
     description="tracing request. (don't use this in production)",
     long_description=README + "\n\n" + CHANGES,
     classifiers=[
