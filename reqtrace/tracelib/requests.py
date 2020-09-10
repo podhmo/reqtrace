@@ -64,16 +64,22 @@ def monkeypatch(*, on_request, on_response, force=False, pip=False):
     if pip:
         # hmm.
         try:
-            import pip.download as pipdownload
-        except ImportError:
-            import pip._internal.download as pipdownload
-        try:
-            import pip._internal.cli.base_command as pipbasecommand
+            import pip._internal.network.session as pipdownload
         except ImportError:
             try:
-                import pip.basecommand as pipbasecommand
+                import pip.download as pipdownload
             except ImportError:
-                import pip._internal.basecommand as pipbasecommand
+                import pip._internal.download as pipdownload
+        try:
+            import pip._internal.cli.req_command as pipbasecommand
+        except ImportError:
+            try:
+                import pip._internal.cli.base_command as pipbasecommand
+            except ImportError:
+                try:
+                    import pip.basecommand as pipbasecommand
+                except ImportError:
+                    import pip._internal.basecommand as pipbasecommand
 
         _registry["originalPipSession"] = pipdownload.PipSession
 
